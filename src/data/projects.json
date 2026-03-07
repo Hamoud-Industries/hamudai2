@@ -1,0 +1,10 @@
+[
+  {
+    "id": "1",
+    "title": "School AI Assistant",
+    "description": "Your ultimate academic companion. Upload assignments, images, or PDFs, and get instant help with homework, explanations, and study guides powered by advanced vision and OCR.",
+    "status": "Released",
+    "image": "https://picsum.photos/seed/schoolai/600/400",
+    "tags": ["AI", "Education", "Vision", "OCR"]
+  }
+]
