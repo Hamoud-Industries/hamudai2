@@ -365,7 +365,7 @@ export default function SchoolAIChatbot() {
 
       // Use llama-3.2-90b-vision-preview if there are images, otherwise use llama-3.3-70b-versatile
       const hasImagesInHistory = newMessages.some(m => m.images && m.images.length > 0);
-      const model = hasImagesInHistory ? "llama-3.2-90b-vision-preview" : "llama-3.3-70b-versatile";
+      const model = hasImagesInHistory ? "meta-llama/llama-4-scout-17b-16e-instruct" : "llama-3.3-70b-versatile";
 
       const chatCompletion = await groq.chat.completions.create({
         messages: finalMessages as any,
