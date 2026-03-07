@@ -363,13 +363,10 @@ export default function SchoolAIChatbot() {
         ...groqMessages
       ];
 
-      // Use llama-3.2-90b-vision-preview if there are images, otherwise use llama-3.3-70b-versatile
-      const hasImagesInHistory = newMessages.some(m => m.images && m.images.length > 0);
-      const model = hasImagesInHistory ? "meta-llama/llama-4-scout-17b-16e-instruct" : "llama-3.3-70b-versatile";
-
+      // Use the requested Llama 4 Scout model for everything
       const chatCompletion = await groq.chat.completions.create({
         messages: finalMessages as any,
-        model: model,
+        model: "meta-llama/llama-4-scout-17b-16e-instruct",
         temperature: 0.5,
         max_tokens: 2048,
       });
