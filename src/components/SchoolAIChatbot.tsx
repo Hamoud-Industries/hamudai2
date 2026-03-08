@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, FormEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Send, Paperclip, Loader2, Trash2, Bot, User, Sparkles, Menu, Plus, MessageSquare, X, Globe, UploadCloud, BrainCircuit, Baby, Flame, GraduationCap, Mic, MicOff } from 'lucide-react';
+import { Send, Paperclip, Loader2, Trash2, Bot, User, Menu, Plus, MessageSquare, X, Globe, UploadCloud, BrainCircuit, Baby, Flame, GraduationCap, Mic, MicOff, ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import * as pdfjsLib from 'pdfjs-dist';
 // @ts-ignore
 import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
@@ -11,6 +12,8 @@ import 'katex/dist/katex.min.css';
 import { cn } from '../utils/cn';
 import Groq from 'groq-sdk';
 import confetti from 'canvas-confetti';
+import { useLanguage } from '../i18n/useLanguage';
+import AsteriskLogo from './AsteriskLogo';
 
 // Setup PDF.js worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
@@ -54,6 +57,7 @@ export default function SchoolAIChatbot() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<any>(null);
+  const { t, lang } = useLanguage();
 
   // Mouse tracking for subtle 3D effect
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
@@ -106,7 +110,7 @@ export default function SchoolAIChatbot() {
         const recognition = new SpeechRecognition();
         recognition.continuous = true;
         recognition.interimResults = true;
-        recognition.lang = 'de-DE'; // Default to German
+        recognition.lang = lang === 'de' ? 'de-DE' : 'en-US';
 
         recognition.onresult = (event: any) => {
           let currentTranscript = '';
@@ -118,7 +122,6 @@ export default function SchoolAIChatbot() {
               currentTranscript += transcript;
             }
           }
-          // We could show interim results, but for simplicity we just append final results
         };
 
         recognition.onerror = (event: any) => {
@@ -139,11 +142,11 @@ export default function SchoolAIChatbot() {
         recognitionRef.current.stop();
       }
     };
-  }, []);
+  }, [lang]);
 
   const toggleListening = () => {
     if (!recognitionRef.current) {
-      alert('Dein Browser unterstützt leider keine Spracherkennung. Bitte nutze Chrome oder Safari.');
+      alert(t('micError', 'chat'));
       return;
     }
 
@@ -320,13 +323,6 @@ export default function SchoolAIChatbot() {
     setIsLoading(true);
 
     try {
-      const apiKey = (import.meta as any).env.VITE_GROQ_API_KEY;
-      if (!apiKey) {
-        throw new Error("VITE_GROQ_API_KEY is not set in the environment variables.");
-      }
-
-      const groq = new Groq({ apiKey, dangerouslyAllowBrowser: true });
-      
       let searchContext = "";
       let searchSources: SearchSource[] = [];
 
@@ -428,13 +424,25 @@ export default function SchoolAIChatbot() {
       ];
 
       // Use the requested Llama 4 Scout model for everything
-      const chatCompletion = await groq.chat.completions.create({
-        messages: finalMessages as any,
-        model: "meta-llama/llama-4-scout-17b-16e-instruct",
-        temperature: 0.5,
-        max_tokens: 2048,
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: finalMessages,
+          model: "llama-3.3-70b-versatile",
+          temperature: 0.5,
+          max_tokens: 2048,
+        }),
       });
 
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to fetch response from server");
+      }
+
+      const chatCompletion = await response.json();
       const text = chatCompletion.choices[0]?.message?.content || '';
 
       // Easter Egg: Confetti if the user understood something or says thanks
@@ -461,7 +469,7 @@ export default function SchoolAIChatbot() {
       updateCurrentSession([...newMessages, {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: `**Fehler:** ${error.message}\n\n*Hinweis: Bitte stelle sicher, dass du den \`VITE_GROQ_API_KEY\` in deinen Umgebungsvariablen (Netlify) gesetzt hast.*`
+        content: `**Fehler:** ${error.message}\n\n*Hinweis: Bitte stelle sicher, dass du den \`GROQ_API_KEY\` in deinen Umgebungsvariablen gesetzt hast.*`
       }]);
     } finally {
       setIsLoading(false);
@@ -520,19 +528,26 @@ export default function SchoolAIChatbot() {
             className="absolute md:relative h-full border-r border-white/10 bg-black/95 md:bg-black/80 backdrop-blur-xl flex flex-col shrink-0 overflow-hidden z-[70]"
           >
             <div className="p-4 flex items-center justify-between border-b border-white/10">
-              <h2 className="text-white font-medium tracking-wide">Chat Verlauf</h2>
+              <h2 className="text-white font-medium tracking-wide">{t('history', 'chat')}</h2>
               <button onClick={() => setIsSidebarOpen(false)} className="text-gray-400 hover:text-white transition-colors">
                 <X size={20} />
               </button>
             </div>
             
-            <div className="p-4">
+            <div className="p-4 flex flex-col gap-2">
+              <Link
+                to="/"
+                className="w-full flex items-center gap-2 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white py-3 px-4 rounded-xl transition-colors border border-white/5"
+              >
+                <ArrowLeft size={18} />
+                <span className="font-medium">{t('backHome', 'chat')}</span>
+              </Link>
               <button
                 onClick={createNewSession}
                 className="w-full flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white py-3 px-4 rounded-xl transition-colors border border-white/10"
               >
                 <Plus size={18} />
-                <span className="font-medium">Neuer Chat</span>
+                <span className="font-medium">{t('newChat', 'chat')}</span>
               </button>
             </div>
 
@@ -555,7 +570,7 @@ export default function SchoolAIChatbot() {
                   </div>
                   <button
                     onClick={(e) => deleteSession(session.id, e)}
-                    className="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-red-400 transition-all shrink-0"
+                    className="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-white transition-all shrink-0"
                   >
                     <Trash2 size={14} />
                   </button>
@@ -580,7 +595,7 @@ export default function SchoolAIChatbot() {
               </button>
             )}
             <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center text-white shadow-[0_0_15px_rgba(255,255,255,0.1)] relative overflow-hidden group shrink-0">
-              <Sparkles size={20} className="text-white relative z-10 md:w-6 md:h-6" />
+              <AsteriskLogo size={20} className="text-white relative z-10 md:w-6 md:h-6" />
               <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/20 to-white/0 translate-y-full group-hover:translate-y-[-100%] transition-transform duration-700" />
             </div>
             <div>
@@ -710,7 +725,7 @@ export default function SchoolAIChatbot() {
                   <button
                     type="button"
                     onClick={() => removeImage(idx)}
-                    className="absolute -top-2 -right-2 bg-red-500/80 backdrop-blur-md border border-red-400/50 text-white p-1 md:p-1.5 rounded-full hover:bg-red-500 transition-colors shadow-lg"
+                    className="absolute -top-2 -right-2 bg-gray-800/80 backdrop-blur-md border border-white/20 text-white p-1 md:p-1.5 rounded-full hover:bg-gray-700 transition-colors shadow-lg"
                   >
                     <Trash2 size={12} className="md:w-3.5 md:h-3.5" />
                   </button>
@@ -788,7 +803,7 @@ export default function SchoolAIChatbot() {
                   onClick={toggleListening}
                   className={cn(
                     "p-3 md:p-4 transition-colors shrink-0",
-                    isListening ? "text-red-400 animate-pulse" : "text-gray-400 hover:text-white"
+                    isListening ? "text-white animate-pulse" : "text-gray-400 hover:text-white"
                   )}
                   title="Spracheingabe"
                 >

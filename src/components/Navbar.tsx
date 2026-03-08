@@ -1,19 +1,23 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Menu, X, Code2 } from 'lucide-react';
+import { Menu, X, Bot } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
 import { cn } from '../utils/cn';
-
-const navLinks = [
-  { name: 'Home', href: '#home' },
-  { name: 'About', href: '#about' },
-  { name: 'Projects', href: '#projects' },
-  { name: 'Technology', href: '#technology' },
-  { name: 'Contact', href: '#contact' },
-];
+import { useLanguage } from '../i18n/useLanguage';
+import AsteriskLogo from './AsteriskLogo';
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const location = useLocation();
+  const { t } = useLanguage();
+
+  const navLinks = [
+    { name: t('home', 'nav'), href: '/' },
+    { name: t('privacy', 'nav'), href: '/privacy' },
+    { name: t('terms', 'nav'), href: '/terms' },
+    { name: t('imprint', 'nav'), href: '/imprint' },
+  ];
 
   useEffect(() => {
     const handleScroll = () => {
@@ -33,33 +37,46 @@ export default function Navbar() {
       )}
     >
       <div className="container mx-auto px-6 flex items-center justify-between">
-        <a href="#home" className="flex items-center gap-2 group">
-          <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-purple-600 text-white overflow-hidden">
-            <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />
-            <Code2 size={20} className="relative z-10" />
+        <Link to="/" className="flex items-center gap-2 group">
+          <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-white text-black overflow-hidden">
+            <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors" />
+            <AsteriskLogo size={20} className="relative z-10" />
           </div>
           <span className="text-xl font-bold tracking-tight text-white">
-            Hamoud <span className="text-cyan-400">Labs</span>
+            Hamud<span className="text-gray-400">AI</span>
           </span>
-        </a>
+        </Link>
 
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-8">
           {navLinks.map((link) => (
-            <a
+            <Link
               key={link.name}
-              href={link.href}
-              className="relative text-sm font-medium text-gray-300 hover:text-white transition-colors group py-2"
+              to={link.href}
+              className={cn(
+                "relative text-sm font-medium hover:text-white transition-colors group py-2",
+                location.pathname === link.href ? "text-white" : "text-gray-300"
+              )}
             >
               {link.name}
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-cyan-400 to-purple-500 transition-all duration-300 group-hover:w-full" />
-            </a>
+              <span className={cn(
+                "absolute bottom-0 left-0 h-0.5 bg-white transition-all duration-300",
+                location.pathname === link.href ? "w-full" : "w-0 group-hover:w-full"
+              )} />
+            </Link>
           ))}
-          <a
-            href="#contact"
-            className="px-5 py-2.5 text-sm font-medium text-white bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition-all hover:shadow-[0_0_15px_rgba(6,182,212,0.3)]"
+          <Link
+            to="/chat"
+            className="px-5 py-2.5 text-sm font-medium text-black bg-white hover:bg-gray-200 rounded-full transition-all hover:shadow-[0_0_15px_rgba(255,255,255,0.3)] flex items-center gap-2"
           >
-            Get in Touch
+            <Bot size={16} />
+            {t('start', 'nav')}
+          </Link>
+          <a
+            href="/#contact"
+            className="px-5 py-2.5 text-sm font-medium text-black bg-white hover:bg-gray-200 rounded-full transition-all"
+          >
+            {t('contact', 'nav')}
           </a>
         </nav>
 
@@ -81,15 +98,33 @@ export default function Navbar() {
           className="absolute top-full left-0 right-0 bg-gray-950/95 backdrop-blur-xl border-b border-white/10 p-6 md:hidden flex flex-col gap-4 shadow-2xl"
         >
           {navLinks.map((link) => (
-            <a
+            <Link
               key={link.name}
-              href={link.href}
-              className="text-lg font-medium text-gray-300 hover:text-cyan-400 transition-colors"
+              to={link.href}
+              className={cn(
+                "text-lg font-medium transition-colors",
+                location.pathname === link.href ? "text-white" : "text-gray-400 hover:text-white"
+              )}
               onClick={() => setMobileMenuOpen(false)}
             >
               {link.name}
-            </a>
+            </Link>
           ))}
+          <Link
+            to="/chat"
+            onClick={() => setMobileMenuOpen(false)}
+            className="mt-4 px-5 py-3 text-center font-medium text-black bg-white hover:bg-gray-200 rounded-xl transition-all flex items-center justify-center gap-2"
+          >
+            <Bot size={18} />
+            {t('start', 'nav')}
+          </Link>
+          <a
+            href="/#contact"
+            onClick={() => setMobileMenuOpen(false)}
+            className="px-5 py-3 text-center font-medium text-black bg-white hover:bg-gray-200 rounded-xl transition-all"
+          >
+            {t('contact', 'nav')}
+          </a>
         </motion.div>
       )}
     </header>
