@@ -95,7 +95,7 @@ export default function Terms() {
                 <p className="text-yellow-300 text-sm font-medium">⚠️ Wichtiger Hinweis zur KI-Nutzung</p>
               </div>
               <p className="text-gray-300 leading-relaxed mb-4">
-                HamudAI wird von einer künstlichen Intelligenz (Google Gemini API) betrieben. Der Anbieter übernimmt <strong className="text-white">keine Garantie</strong> für die Richtigkeit, Vollständigkeit, Aktualität oder Eignung der generierten Inhalte für einen bestimmten Zweck.
+                HamudAI wird von einer künstlichen Intelligenz betrieben. Der Anbieter übernimmt <strong className="text-white">keine Garantie</strong> für die Richtigkeit, Vollständigkeit, Aktualität oder Eignung der generierten Inhalte für einen bestimmten Zweck.
               </p>
               <ul className="space-y-2 text-gray-300">
                 <li className="flex items-start gap-2"><span className="text-white mt-1">•</span> KI-generierte Antworten können <strong className="text-white">Fehler oder Ungenauigkeiten</strong> enthalten (sog. „Halluzinationen")</li>
