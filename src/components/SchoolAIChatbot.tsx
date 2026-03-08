@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, FormEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Send, Paperclip, Loader2, Trash2, Bot, User, Sparkles, Menu, Plus, MessageSquare, X, Globe, UploadCloud, BrainCircuit, Baby, Flame, GraduationCap } from 'lucide-react';
+import { Send, Paperclip, Loader2, Trash2, Bot, User, Sparkles, Menu, Plus, MessageSquare, X, Globe, UploadCloud, BrainCircuit, Baby, Flame, GraduationCap, Mic, MicOff } from 'lucide-react';
 import * as pdfjsLib from 'pdfjs-dist';
 // @ts-ignore
 import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
@@ -49,9 +49,11 @@ export default function SchoolAIChatbot() {
   
   // New Features State
   const [persona, setPersona] = useState<'standard' | 'socratic' | 'eli5' | 'genz'>('standard');
+  const [isListening, setIsListening] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const recognitionRef = useRef<any>(null);
 
   // Mouse tracking for subtle 3D effect
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
@@ -95,6 +97,68 @@ export default function SchoolAIChatbot() {
       localStorage.setItem('hamudai_sessions', JSON.stringify(sessions));
     }
   }, [sessions]);
+
+  // Initialize Speech Recognition
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        const recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'de-DE'; // Default to German
+
+        recognition.onresult = (event: any) => {
+          let currentTranscript = '';
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript;
+            if (event.results[i].isFinal) {
+              setInput(prev => prev + transcript + ' ');
+            } else {
+              currentTranscript += transcript;
+            }
+          }
+          // We could show interim results, but for simplicity we just append final results
+        };
+
+        recognition.onerror = (event: any) => {
+          console.error('Speech recognition error', event.error);
+          setIsListening(false);
+        };
+
+        recognition.onend = () => {
+          setIsListening(false);
+        };
+
+        recognitionRef.current = recognition;
+      }
+    }
+    
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+    };
+  }, []);
+
+  const toggleListening = () => {
+    if (!recognitionRef.current) {
+      alert('Dein Browser unterstützt leider keine Spracherkennung. Bitte nutze Chrome oder Safari.');
+      return;
+    }
+
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      try {
+        recognitionRef.current.start();
+        setIsListening(true);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  };
 
   const currentSession = sessions.find(s => s.id === currentSessionId);
   const messages = currentSession?.messages || [];
@@ -415,7 +479,7 @@ export default function SchoolAIChatbot() {
       }}
       transition={{ type: 'spring', stiffness: 75, damping: 15 }}
       className={cn(
-        "w-full max-w-6xl h-[100dvh] md:h-[90vh] flex relative rounded-none md:rounded-3xl glass-panel glass-reflection overflow-hidden z-10 shadow-2xl transition-colors duration-1000"
+        "w-full max-w-6xl h-full md:h-[90vh] flex relative rounded-none md:rounded-3xl glass-panel glass-reflection overflow-hidden z-10 shadow-2xl transition-colors duration-1000"
       )}
       style={{ perspective: 1000 }}
       onDragOver={handleDragOver}
@@ -715,10 +779,21 @@ export default function SchoolAIChatbot() {
                       }
                     }
                   }}
-                  placeholder="Nachricht an HamudAI..."
+                  placeholder={isListening ? "Hört zu..." : "Nachricht an HamudAI..."}
                   className="flex-1 bg-transparent border-none focus:ring-0 text-white p-3 md:p-4 max-h-32 min-h-[50px] md:min-h-[60px] text-sm md:text-base resize-none outline-none placeholder:text-gray-500"
                   rows={1}
                 />
+                <button
+                  type="button"
+                  onClick={toggleListening}
+                  className={cn(
+                    "p-3 md:p-4 transition-colors shrink-0",
+                    isListening ? "text-red-400 animate-pulse" : "text-gray-400 hover:text-white"
+                  )}
+                  title="Spracheingabe"
+                >
+                  {isListening ? <Mic size={20} className="md:w-[22px] md:h-[22px]" /> : <MicOff size={20} className="md:w-[22px] md:h-[22px]" />}
+                </button>
               </div>
             </div>
             <button
